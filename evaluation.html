@@ -333,10 +333,11 @@ const FLOW = [
     texte:"Un store banne automatique protège une terrasse du soleil et peut se rétracter seul en cas de vent ou de pluie. Le cahier des charges précise, sous forme de tableau, les exigences que ce store doit respecter."},
 
   {id:"p3-q1", type:"qcm", partie:3, accent:"var(--plum)", points:1,
-    question:"Sur l'échelle de flexibilité d'un cahier des charges, que signifie le niveau « F0 » ?",
-    options:["C'est un critère négociable","C'est une exigence imposée, non négociable","C'est un simple souhait, si possible"],
-    correct:1},
-
+       question:"Sur l'échelle de flexibilité d'un cahier des charges, que signifie le niveau « F0 » ?",
+       hint:"Pas besoin de connaître l'échelle par cœur : plus le chiffre est petit, moins le critère est négociable. F0 = aucune négociation possible, F3 = simple souhait.",
+       options:["C'est un critère négociable","C'est une exigence imposée, non négociable","C'est un simple souhait, si possible"],
+       correct:1},
+  
   {id:"p3-q2", type:"table", partie:3, accent:"var(--plum)", points:2,
     question:"Complète la ligne du cahier des charges correspondant à cette fonction.",
     fonctionLabel:"FP1 — Protéger la terrasse du soleil",
@@ -344,11 +345,12 @@ const FLOW = [
       {label:"Critère", options:["Taux de surface ombragée","Couleur de la toile","Poids total du store"], correct:0},
       {label:"Niveau", options:["≥ 80 % de la terrasse à l'ombre entre 12 h et 16 h","Store de couleur rouge","Moins de 5 kg"], correct:0}]},
 
-  {id:"p3-q3", type:"qcm", partie:3, accent:"var(--plum)", points:1,
-    question:"Le store doit résister à des vents jusqu'à 50 km/h : cette exigence est imposée pour la sécurité, elle ne peut pas être discutée. Quel niveau de flexibilité lui attribue-t-on ?",
-    options:["F0","F1","F3"],
-    correct:0},
-
+    {id:"p3-q3", type:"qcm", partie:3, accent:"var(--plum)", points:1,
+         question:"Le store doit résister à des vents jusqu'à 50 km/h : cette exigence est imposée pour la sécurité, elle ne peut pas être discutée. Quel niveau de flexibilité lui attribue-t-on ?",
+         hint:"Rappel de l'échelle : F0 = imposé, non négociable (aucune marge) · F1 = négociable avec risque · F3 = simple souhait, si possible. Pas besoin de l'avoir appris par cœur, raisonne à partir de ce rappel.",
+         options:["F0","F1","F3"],
+         correct:0},
+  
   {id:"p3-q4", type:"qcm", partie:3, accent:"var(--plum)", points:3,
        question:"Quelle ligne de cahier des charges correspond correctement à l'exigence « le store doit se rétracter automatiquement en cas de pluie » ?",
        options:[
