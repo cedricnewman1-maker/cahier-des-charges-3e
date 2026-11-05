@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Du besoin au cahier des charges</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --rust:#C1502E;
+    --rust-dark:#9C3D22;
+    --teal:#1F7A6C;
+    --teal-dark:#145C51;
+    --plum:#7B3F6B;
+    --plum-dark:#5C2E50;
+    --mustard:#D99A2B;
+    --ink:#2B2420;
+    --ink-soft:#6B5D51;
+    --card:#FFFDF9;
+    --card-alt:#F7EEE3;
+    --line:#E7D9C8;
+    --good:#2E7D5B;
+    --bad:#C14B3D;
+    --bg-a:#B5452E;
+    --bg-b:#5C2E52;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ink:#F3ECE3;
+      --ink-soft:#CBB9A8;
+      --card:#2A2320;
+      --card-alt:#352B26;
+      --line:#4A3C33;
+      --bg-a:#5E2518;
+      --bg-b:#2E1830;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#F3ECE3;
+    --ink-soft:#CBB9A8;
+    --card:#2A2320;
+    --card-alt:#352B26;
+    --line:#4A3C33;
+    --bg-a:#5E2518;
+    --bg-b:#2E1830;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    font-family:'Nunito',system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 800px at 85% -10%, rgba(217,154,43,.35), transparent 60%),
+      radial-gradient(900px 900px at -10% 110%, rgba(31,122,108,.30), transparent 55%),
+      linear-gradient(135deg, var(--bg-a), var(--bg-b));
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:28px 16px 60px;
+  }
+  .blob{position:fixed; z-index:0; opacity:.5; pointer-events:none;}
+  .wrap{position:relative; z-index:1; width:100%; max-width:760px;}
+  .topbar{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .seg{flex:1; height:10px; border-radius:99px; background:rgba(255,255,255,.28); overflow:hidden;}
+  .seg > i{display:block; height:100%; width:0%; border-radius:99px; transition:width .35s ease;}
+  .seg.p1 > i{background:var(--rust);}
+  .seg.p2 > i{background:var(--teal);}
+  .seg.p3 > i{background:var(--plum);}
+  .compteur{font-family:'Fredoka',sans-serif; font-weight:600; font-size:13px; color:#fff; white-space:nowrap; text-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .card{
+    background:var(--card);
+    border-radius:26px;
+    box-shadow:0 20px 50px rgba(30,15,10,.28), 0 2px 6px rgba(30,15,10,.12);
+    padding:34px 32px 30px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";
+    position:absolute; top:-60px; right:-60px; width:180px; height:180px;
+    border-radius:50%;
+    background:var(--accent, var(--rust));
+    opacity:.10;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'Fredoka',sans-serif; font-weight:600; font-size:12.5px;
+    letter-spacing:.06em; text-transform:uppercase;
+    color:var(--accent, var(--rust));
+    background:color-mix(in srgb, var(--accent, var(--rust)) 14%, transparent);
+    padding:6px 14px; border-radius:99px; margin-bottom:14px;
+  }
+  h1.titre{
+    font-family:'Fredoka',sans-serif; font-weight:700; font-size:26px; line-height:1.25;
+    margin:0 0 10px; color:var(--ink);
+  }
+  .objet-badge{
+    font-family:'Fredoka',sans-serif; font-weight:600; font-size:15px;
+    color:var(--accent, var(--rust)); margin:0 0 18px;
+  }
+  p.txt{font-size:16.5px; line-height:1.55; color:var(--ink-soft); margin:0 0 10px;}
+  .illus{width:100%; max-width:260px; display:block; margin:6px auto 20px;}
+  .question{
+    font-family:'Fredoka',sans-serif; font-weight:600; font-size:19px; line-height:1.4;
+    color:var(--ink); margin:0 0 20px;
+  }
+  .hint{font-size:13.5px; color:var(--ink-soft); font-style:italic; margin:-14px 0 18px;}
+  .options{display:flex; flex-direction:column; gap:10px; margin-bottom:8px;}
+  .opt{
+    display:flex; align-items:center; gap:12px;
+    text-align:left; width:100%;
+    border:2px solid var(--line); background:var(--card-alt);
+    border-radius:16px; padding:14px 16px;
+    font-family:'Nunito',sans-serif; font-weight:700; font-size:15.5px; color:var(--ink);
+    cursor:pointer; transition:all .15s ease;
+  }
+  .opt:hover{border-color:var(--accent, var(--rust));}
+  .opt.selected{
+    border-color:var(--accent, var(--rust));
+    background:color-mix(in srgb, var(--accent, var(--rust)) 16%, var(--card-alt));
+  }
+  .opt .puce{
+    flex:0 0 26px; height:26px; border-radius:8px; border:2px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800;
+    color:var(--ink-soft); background:var(--card);
+  }
+  .opt.selected .puce{background:var(--accent, var(--rust)); border-color:var(--accent, var(--rust)); color:#fff;}
+  textarea.reponse-libre{
+    width:100%; min-height:110px; resize:vertical;
+    border:2px solid var(--line); border-radius:16px; padding:14px 16px;
+    font-family:'Nunito',sans-serif; font-size:16px; color:var(--ink); background:var(--card-alt);
+    outline:none;
+  }
+  textarea.reponse-libre:focus{border-color:var(--accent, var(--rust));}
+  .tri-item{
+    display:flex; align-items:center; gap:12px;
+    border:2px solid var(--line); border-radius:16px; padding:12px 14px; margin-bottom:10px;
+    background:var(--card-alt);
+  }
+  .tri-item .tri-txt{flex:1; font-size:14.5px; font-weight:700; color:var(--ink); line-height:1.3;}
+  .tri-btns{display:flex; gap:6px; flex:0 0 auto;}
+  .tri-btn{
+    font-family:'Fredoka',sans-serif; font-weight:600; font-size:13px;
+    border:2px solid var(--line); background:var(--card); color:var(--ink-soft);
+    border-radius:10px; padding:8px 12px; cursor:pointer;
+  }
+  .tri-btn.on-fp{border-color:var(--teal); background:var(--teal); color:#fff;}
+  .tri-btn.on-fc{border-color:var(--rust); background:var(--rust); color:#fff;}
+  .mini-table{width:100%; border-collapse:separate; border-spacing:0; margin-bottom:18px; font-size:14px;}
+  .mini-table th, .mini-table td{border:1.5px solid var(--line); padding:10px 12px; text-align:left;}
+  .mini-table th{background:var(--card-alt); font-family:'Fredoka',sans-serif; font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft);}
+  .mini-table td.blank{color:var(--accent,var(--rust)); font-weight:800; font-style:italic;}
+  .sous-label{font-family:'Fredoka',sans-serif; font-weight:600; font-size:14px; color:var(--ink); margin:14px 0 8px;}
+  .nav-row{display:flex; justify-content:space-between; align-items:center; margin-top:26px; gap:12px;}
+  .btn{
+    font-family:'Fredoka',sans-serif; font-weight:600; font-size:15.5px;
+    border:none; border-radius:99px; padding:13px 26px; cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--accent, var(--rust)); color:#fff; box-shadow:0 8px 18px color-mix(in srgb, var(--accent, var(--rust)) 45%, transparent);}
+  .btn-primary:disabled{opacity:.38; cursor:not-allowed; box-shadow:none;}
+  .btn-ghost{background:transparent; color:var(--ink-soft); border:2px solid var(--line);}
+  .field{margin-bottom:16px;}
+  .field label{display:block; font-family:'Fredoka',sans-serif; font-weight:600; font-size:13.5px; color:var(--ink-soft); margin-bottom:6px; text-transform:uppercase; letter-spacing:.04em;}
+  .field input, .field select{
+    width:100%; border:2px solid var(--line); border-radius:14px; padding:12px 14px;
+    font-family:'Nunito',sans-serif; font-size:16px; color:var(--ink); background:var(--card-alt);
+    outline:none; -webkit-appearance:none; appearance:none;
+  }
+  .field input:focus, .field select:focus{border-color:var(--rust);}
+  .row2{display:flex; gap:14px;}
+  .row2 .field{flex:1;}
+  .badge-row{display:flex; gap:10px; margin:4px 0 22px;}
+  .badge-chip{flex:1; text-align:center; border-radius:16px; padding:12px 6px; background:var(--card-alt); border:2px solid var(--line);}
+  .badge-chip .n{font-family:'Fredoka',sans-serif; font-weight:700; font-size:20px;}
+  .badge-chip .l{font-size:11px; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.03em;}
+  .status-pill{
+    display:inline-block; font-family:'Fredoka',sans-serif; font-weight:600; font-size:12px;
+    padding:4px 11px; border-radius:99px; margin-left:8px; vertical-align:middle;
+  }
+  .status-fini{background:color-mix(in srgb, var(--good) 18%, transparent); color:var(--good);}
+  .status-attente{background:color-mix(in srgb, var(--mustard) 25%, transparent); color:#8A5E16;}
+  .footer-note{text-align:center; font-size:12.5px; color:rgba(255,255,255,.75); margin-top:18px; font-weight:700; text-shadow:0 1px 3px rgba(0,0,0,.2);}
+  .prof-panel{margin-top:26px; border-top:2px dashed var(--line); padding-top:20px;}
+  .prof-row{display:flex; justify-content:space-between; gap:14px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px;}
+  .prof-row:last-child{border-bottom:none;}
+  .prof-score{font-weight:800; font-family:'Fredoka',sans-serif;}
+  .ok{color:var(--good);}
+  .ko{color:var(--bad);}
+  .verif{color:#8A5E16;}
+  @media (max-width:480px){
+    .card{padding:26px 20px 24px;}
+    h1.titre{font-size:22px;}
+    .row2{flex-direction:column; gap:0;}
+  }
+</style>
+</head>
+<body>
+
+<svg class="blob" style="top:-120px; left:-160px;" width="420" height="420" viewBox="0 0 420 420" aria-hidden="true">
+  <path fill="#D99A2B" opacity=".5" d="M210 10C320 10 410 90 410 200C410 310 320 410 200 410C90 410 10 320 10 210C10 100 100 10 210 10Z"/>
+</svg>
+<svg class="blob" style="bottom:-140px; right:-160px;" width="460" height="460" viewBox="0 0 460 460" aria-hidden="true">
+  <path fill="#1F7A6C" opacity=".35" d="M230 20C350 20 440 110 440 230C440 350 350 440 230 440C110 440 20 350 20 230C20 110 110 20 230 20Z"/>
+</svg>
+
+<div class="wrap">
+  <div class="topbar" id="topbar"></div>
+  <div class="card" id="card"></div>
+  <div class="footer-note" id="footnote">Technologie · cycle 4 · 3ᵉ</div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================ CONFIGURATION */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNecR1R_M6jn0oY3wvAcQ1WcECsAOuMN0t3Zh6yTds0vVUJKnLj2PpsOcX1ioyZW-w/exec";
+const STORAGE_KEY = "evalConception3e_v1";
+const QUEUE_KEY = "evalConception3e_file_v1";
+const CLASSES = ["3eA", "3eB"];
+
+/* ============================================================ ICONES SVG (badges) */
+function iconBesoin(c){return `<svg viewBox="0 0 64 64" width="46" height="46"><circle cx="27" cy="27" r="16" fill="none" stroke="${c}" stroke-width="5"/><line x1="39" y1="39" x2="54" y2="54" stroke="${c}" stroke-width="6" stroke-linecap="round"/></svg>`;}
+function iconContrainte(c){return `<svg viewBox="0 0 64 64" width="46" height="46"><circle cx="32" cy="32" r="9" fill="${c}"/>${[0,60,120,180,240,300].map(a=>{const r1=16,r2=27,rad=a*Math.PI/180;const x1=32+r1*Math.cos(rad),y1=32+r1*Math.sin(rad),x2=32+r2*Math.cos(rad),y2=32+r2*Math.sin(rad);return `<circle cx="${x2}" cy="${y2}" r="5.5" fill="${c}"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="4" stroke-linecap="round"/>`;}).join("")}</svg>`;}
+function iconCdc(c){return `<svg viewBox="0 0 64 64" width="46" height="46"><rect x="14" y="10" width="36" height="46" rx="5" fill="none" stroke="${c}" stroke-width="5"/><rect x="24" y="6" width="16" height="9" rx="3" fill="${c}"/><line x1="21" y1="28" x2="43" y2="28" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="21" y1="38" x2="43" y2="38" stroke="${c}" stroke-width="4" stroke-linecap="round"/><path d="M21 48 l4 4 l9 -10" fill="none" stroke="${c}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
+
+function illusTrottinette(){return `<svg class="illus" viewBox="0 0 220 160"><rect x="0" y="0" width="220" height="160" fill="none"/>
+  <circle cx="52" cy="128" r="18" fill="#2B2420" opacity=".9"/><circle cx="52" cy="128" r="7" fill="#F7EEE3"/>
+  <circle cx="178" cy="128" r="18" fill="#2B2420" opacity=".9"/><circle cx="178" cy="128" r="7" fill="#F7EEE3"/>
+  <rect x="42" y="112" width="20" height="10" rx="3" fill="#C1502E"/>
+  <path d="M60 118 L150 118 L170 118" stroke="#C1502E" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <rect x="150" y="40" width="9" height="80" rx="4" fill="#C1502E"/>
+  <rect x="120" y="32" width="52" height="12" rx="6" fill="#D99A2B"/>
+  <circle cx="178" cy="30" r="6" fill="#2B2420"/>
+  <rect x="55" y="104" width="100" height="10" rx="5" fill="#9C3D22"/>
+</svg>`;}
+function illusLaveLinge(){return `<svg class="illus" viewBox="0 0 180 180"><rect x="20" y="10" width="140" height="160" rx="16" fill="#F7EEE3" stroke="#1F7A6C" stroke-width="5"/>
+  <rect x="34" y="24" width="112" height="18" rx="6" fill="#1F7A6C" opacity=".85"/>
+  <circle cx="46" cy="33" r="4" fill="#fff"/><circle cx="60" cy="33" r="4" fill="#fff" opacity=".6"/>
+  <circle cx="90" cy="108" r="46" fill="none" stroke="#1F7A6C" stroke-width="6"/>
+  <circle cx="90" cy="108" r="32" fill="#CDEAE3"/>
+  <path d="M68 108 a22 22 0 0 1 44 0" fill="none" stroke="#1F7A6C" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="134" cy="52" r="4" fill="#D99A2B"/>
+</svg>`;}
+function illusStore(){return `<svg class="illus" viewBox="0 0 220 150"><rect x="10" y="20" width="14" height="120" fill="#5C2E50"/>
+  <rect x="196" y="20" width="14" height="120" fill="#5C2E50"/>
+  <rect x="10" y="12" width="200" height="16" rx="6" fill="#7B3F6B"/>
+  <path d="M24 28 L60 70 L24 70 Z" fill="#D99A2B"/>
+  <path d="M60 28 L96 70 L60 70 L24 70 Z" fill="#F7EEE3"/>
+  <path d="M96 28 L132 70 L96 70 L60 70 Z" fill="#D99A2B"/>
+  <path d="M132 28 L168 70 L132 70 L96 70 Z" fill="#F7EEE3"/>
+  <path d="M168 28 L196 70 L168 70 L132 70 Z" fill="#D99A2B"/>
+  <rect x="24" y="68" width="172" height="8" fill="#5C2E50"/>
+  <rect x="40" y="76" width="4" height="54" fill="#7B3F6B"/>
+  <rect x="176" y="76" width="4" height="54" fill="#7B3F6B"/>
+</svg>`;}
+
+/* ============================================================ CONTENU DU PARCOURS */
+const FLOW = [
+  {id:"accueil", type:"accueil"},
+
+  {id:"p1-intro", type:"intro", partie:1, accent:"var(--rust)", icon:iconBesoin("#C1502E"),
+    eyebrow:"Partie 1 · L'analyse du besoin", titre:"De quoi a-t-on besoin ?",
+    objet:"Objet étudié : la trottinette électrique en libre-service",
+    illus: illusTrottinette(),
+    texte:"Dans de nombreuses villes, des trottinettes électriques en libre-service permettent de se déplacer sans voiture. Avant de concevoir un tel objet technique, il faut analyser précisément le besoin auquel il répond."},
+
+  {id:"p1-q1", type:"qcm", partie:1, accent:"var(--rust)", points:1,
+    question:"Quel est le destinataire principal de la trottinette électrique en libre-service ?",
+    options:["L'usager qui souhaite se déplacer en ville","Le technicien qui répare les trottinettes","La mairie qui gère le service de location"],
+    correct:0},
+
+  {id:"p1-q2", type:"qcm", partie:1, accent:"var(--rust)", points:1,
+    question:"Sur quoi agit la trottinette électrique ? (la matière d'œuvre)",
+    options:["Le budget de la municipalité","Le déplacement de l'usager","La batterie du smartphone de l'usager"],
+    correct:1},
+
+  {id:"p1-q3", type:"texte", partie:1, accent:"var(--rust)", points:3,
+    question:"En une phrase, formule la fonction globale de la trottinette électrique en libre-service.",
+    hint:"Aide : utilise la structure « Permettre à … de … ». Cette réponse libre sera vérifiée par ton professeur.",
+    keywords:[["permettre","permet"],["usager","utilisateur","personne","client","habitant"],["déplacer","déplacement","circuler","se déplacer","se rendre"]]},
+
+  {id:"p1-q4", type:"qcm-multi", partie:1, accent:"var(--rust)", points:2,
+    question:"Coche les deux phrases qui formulent correctement une fonction globale (sujet implicite + verbe à l'infinitif + complément).",
+    options:[
+      "Permettre à l'usager de se déplacer en ville sans polluer.",
+      "La trottinette est jaune, pliable et légère.",
+      "Permettre à l'usager de transporter de petites charges sur de courtes distances.",
+      "La batterie se recharge la nuit dans un hangar municipal."],
+    correct:[0,2]},
+
+  {id:"p2-intro", type:"intro", partie:2, accent:"var(--teal)", icon:iconContrainte("#1F7A6C"),
+    eyebrow:"Partie 2 · L'analyse des contraintes", titre:"Avec quoi doit-il composer ?",
+    objet:"Objet étudié : le lave-linge connecté",
+    illus: illusLaveLinge(),
+    texte:"Un lave-linge connecté peut être piloté depuis une application. Comme tout objet technique, il doit assurer sa fonction principale tout en respectant de nombreuses contraintes liées à son environnement."},
+
+  {id:"p2-q1", type:"tri", partie:2, accent:"var(--teal)", points:6,
+    question:"Pour chaque phrase, indique si elle décrit la fonction principale (FP) ou une fonction contrainte (FC) du lave-linge connecté.",
+    hint:"Touche FP ou FC pour chaque ligne.",
+    items:[
+      {texte:"Nettoyer le linge sale apporté par l'utilisateur", rep:"FP"},
+      {texte:"Respecter les normes de sécurité électrique en vigueur", rep:"FC"},
+      {texte:"S'adapter à l'encombrement disponible dans la buanderie", rep:"FC"},
+      {texte:"Se connecter à l'application smartphone de l'utilisateur", rep:"FC"},
+      {texte:"Utiliser l'eau du réseau de distribution", rep:"FC"},
+      {texte:"Fonctionner grâce à l'énergie électrique du secteur", rep:"FC"}]},
+
+  {id:"p2-q2", type:"qcm", partie:2, accent:"var(--teal)", points:1,
+    question:"Comment appelle-t-on le diagramme qui représente, autour de l'objet technique, sa fonction principale et ses fonctions contraintes ?",
+    options:["Le diagramme pieuvre","Le cahier des charges","La bête à cornes"],
+    correct:0},
+
+  {id:"p2-q3", type:"texte", partie:2, accent:"var(--teal)", points:3,
+    question:"Rédige une fonction contrainte (FC) du lave-linge connecté concernant la sécurité électrique.",
+    hint:"Cette réponse libre sera vérifiée par ton professeur.",
+    keywords:[["résister","respecter","supporter"],["norme","sécurité","réglementation"],["électrique","électricité"]]},
+
+  {id:"p3-intro", type:"intro", partie:3, accent:"var(--plum)", icon:iconCdc("#7B3F6B"),
+    eyebrow:"Partie 3 · Le cahier des charges", titre:"Comment l'exiger précisément ?",
+    objet:"Objet étudié : le store banne automatique",
+    illus: illusStore(),
+    texte:"Un store banne automatique protège une terrasse du soleil et peut se rétracter seul en cas de vent ou de pluie. Le cahier des charges précise, sous forme de tableau, les exigences que ce store doit respecter."},
+
+  {id:"p3-q1", type:"qcm", partie:3, accent:"var(--plum)", points:1,
+    question:"Sur l'échelle de flexibilité d'un cahier des charges, que signifie le niveau « F0 » ?",
+    options:["C'est un critère négociable","C'est une exigence imposée, non négociable","C'est un simple souhait, si possible"],
+    correct:1},
+
+  {id:"p3-q2", type:"table", partie:3, accent:"var(--plum)", points:2,
+    question:"Complète la ligne du cahier des charges correspondant à cette fonction.",
+    fonctionLabel:"FP1 — Protéger la terrasse du soleil",
+    blancs:[
+      {label:"Critère", options:["Taux de surface ombragée","Couleur de la toile","Poids total du store"], correct:0},
+      {label:"Niveau", options:["≥ 80 % de la terrasse à l'ombre entre 12 h et 16 h","Store de couleur rouge","Moins de 5 kg"], correct:0}]},
+
+  {id:"p3-q3", type:"qcm", partie:3, accent:"var(--plum)", points:1,
+    question:"Le store doit résister à des vents jusqu'à 50 km/h : cette exigence est imposée pour la sécurité, elle ne peut pas être discutée. Quel niveau de flexibilité lui attribue-t-on ?",
+    options:["F0","F1","F3"],
+    correct:0},
+
+  {id:"p3-q4", type:"texte", partie:3, accent:"var(--plum)", points:3,
+    question:"Rédige une ligne de cahier des charges (fonction, critère et niveau) pour la contrainte suivante : le store doit se rétracter automatiquement en cas de pluie.",
+    hint:"Cette réponse libre sera vérifiée par ton professeur.",
+    keywords:[["capteur","détecteur"],["pluie"],["automatique","automatiquement","seul","sans intervention"]]},
+
+  {id:"fin", type:"fin"}
+];
+
+const TASK_TYPES = ["qcm","qcm-multi","texte","tri","table"];
+const TASK_INDEXES = {};
+(function(){let n=0; FLOW.forEach(f=>{if(TASK_TYPES.includes(f.type)){TASK_INDEXES[f.id]=++n;}});})();
+const TOTAL_TASKS = Object.keys(TASK_INDEXES).length;
+const MAX_POINTS = FLOW.filter(f=>TASK_TYPES.includes(f.type)).reduce((s,f)=>s+f.points,0);
+
+/* ============================================================ ETAT */
+let state = chargerBrouillon() || {ecran:0, eleve:{classe:"", nom:"", prenom:""}, reponses:{}};
+const PROF_MODE = new URLSearchParams(location.search).has("prof");
+
+function sauverBrouillon(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function chargerBrouillon(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    if(d && typeof d.ecran === "number" && d.reponses) return d;
+  }catch(e){}
+  return null;
+}
+function reinitialiser(){
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  state = {ecran:0, eleve:{classe:"", nom:"", prenom:""}, reponses:{}};
+  render();
+}
+
+/* ============================================================ CORRECTION */
+function normaliser(s){
+  return (s||"").toString().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+}
+function contientGroupe(texteNorm, groupe){
+  return groupe.some(mot => texteNorm.includes(normaliser(mot)));
+}
+function corrigerItem(item, rep){
+  if(rep === undefined || rep === null) return {score:0, verifie:false};
+  switch(item.type){
+    case "qcm":
+      return {score: rep === item.correct ? item.points : 0, verifie:false};
+    case "qcm-multi": {
+      const a = Array.isArray(rep) ? [...rep].sort() : [];
+      const b = [...item.correct].sort();
+      const egal = a.length === b.length && a.every((v,i)=>v===b[i]);
+      return {score: egal ? item.points : 0, verifie:false};
+    }
+    case "texte": {
+      const norm = normaliser(rep);
+      const n = item.keywords.filter(g => contientGroupe(norm, g)).length;
+      return {score: n, verifie:true};
+    }
+    case "tri": {
+      let n = 0;
+      item.items.forEach((it,i)=>{ if(rep && rep[i] === it.rep) n++; });
+      return {score:n, verifie:false};
+    }
+    case "table": {
+      let n = 0;
+      item.blancs.forEach((b,i)=>{ if(rep && rep[i] === b.correct) n++; });
+      return {score:n, verifie:false};
+    }
+    default: return {score:0, verifie:false};
+  }
+}
+function calculerTotal(){
+  let total = 0, verifAttente = false;
+  FLOW.filter(f=>TASK_TYPES.includes(f.type)).forEach(item=>{
+    const c = corrigerItem(item, state.reponses[item.id]);
+    total += c.score;
+    if(c.verifie) verifAttente = true;
+  });
+  return {total, max:MAX_POINTS, pourcentage: Math.round((total/MAX_POINTS)*100), verifAttente};
+}
+function niveauMaitrise(pct){
+  if(pct >= 85) return "Très bonne maîtrise";
+  if(pct >= 60) return "Maîtrise satisfaisante";
+  if(pct >= 35) return "Maîtrise fragile";
+  return "Maîtrise insuffisante";
+}
+
+/* ============================================================ ENVOI DES RESULTATS */
+function construirePayload(){
+  const {total, max, pourcentage} = calculerTotal();
+  const detail = {};
+  FLOW.filter(f=>TASK_TYPES.includes(f.type)).forEach(item=>{
+    const c = corrigerItem(item, state.reponses[item.id]);
+    detail[item.id] = {reponse: state.reponses[item.id], score:c.score, bareme:item.points, verifie:c.verifie};
+  });
+  return {
+    horodatage: new Date().toISOString(),
+    classe: state.eleve.classe, nom: state.eleve.nom, prenom: state.eleve.prenom,
+    total, max, pourcentage, niveau: niveauMaitrise(pourcentage),
+    detail
+  };
+}
+function ajouterAFile(payload){
+  try{
+    const f = JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
+    f.push(payload);
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(f));
+  }catch(e){}
+}
+function viderFile(){
+  if(!SCRIPT_URL) return;
+  let f = [];
+  try{ f = JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]"); }catch(e){}
+  if(!f.length) return;
+  f.forEach(payload=>{
+    fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body: JSON.stringify(payload)}).catch(()=>{});
+  });
+  try{ localStorage.removeItem(QUEUE_KEY); }catch(e){}
+}
+window.addEventListener("online", viderFile);
+setInterval(viderFile, 15000);
+
+function envoyerReponses(){
+  const payload = construirePayload();
+  if(SCRIPT_URL){
+    fetch(SCRIPT_URL, {method:"POST", mode:"no-cors", body: JSON.stringify(payload)}).catch(()=>{ ajouterAFile(payload); });
+  } else {
+    ajouterAFile(payload);
+  }
+  state.ecran = FLOW.length - 1;
+  state.termine = true;
+  sauverBrouillon();
+  render();
+}
+
+/* ============================================================ RENDU */
+function render(){
+  const item = FLOW[state.ecran];
+  document.documentElement.style.setProperty("--accent-courant", item.accent || "var(--rust)");
+  renderTopbar(item);
+  const card = document.getElementById("card");
+  card.style.setProperty("--accent", item.accent || "var(--rust)");
+  card.innerHTML = "";
+  switch(item.type){
+    case "accueil": card.innerHTML = tplAccueil(); break;
+    case "intro": card.innerHTML = tplIntro(item); break;
+    case "qcm": card.innerHTML = tplQcm(item, false); break;
+    case "qcm-multi": card.innerHTML = tplQcm(item, true); break;
+    case "texte": card.innerHTML = tplTexte(item); break;
+    case "tri": card.innerHTML = tplTri(item); break;
+    case "table": card.innerHTML = tplTable(item); break;
+    case "fin": card.innerHTML = tplFin(); break;
+  }
+  attacherEvenements(item);
+}
+
+function renderTopbar(item){
+  const top = document.getElementById("topbar");
+  if(item.type === "accueil" || item.type === "fin"){ top.innerHTML = ""; return; }
+  const taches = FLOW.filter(f=>TASK_TYPES.includes(f.type));
+  const parProjet = {1:[], 2:[], 3:[]};
+  taches.forEach(f=>parProjet[f.partie].push(f));
+  function pct(p){
+    const liste = parProjet[p];
+    const idxActuel = taches.indexOf(item);
+    let fait = 0;
+    liste.forEach(f=>{ if(taches.indexOf(f) < idxActuel || (taches.indexOf(f)===idxActuel)) {
+      if(taches.indexOf(f) < idxActuel) fait++;
+      else if(taches.indexOf(f)===idxActuel) fait += 0.5;
+    }});
+    return Math.min(100, Math.round((fait/liste.length)*100));
+  }
+  const numActuel = TASK_INDEXES[item.id] || null;
+  top.innerHTML = `
+    <div class="seg p1"><i style="width:${pct(1)}%"></i></div>
+    <div class="seg p2"><i style="width:${pct(2)}%"></i></div>
+    <div class="seg p3"><i style="width:${pct(3)}%"></i></div>
+    <span class="compteur">${numActuel ? "Question "+numActuel+" / "+TOTAL_TASKS : ""}</span>`;
+}
+
+function tplAccueil(){
+  return `
+    <div class="eyebrow" style="--accent:var(--rust)">Évaluation · technologie</div>
+    <h1 class="titre">Du besoin au cahier des charges</h1>
+    <p class="txt">Cette évaluation sur tablette porte sur l'analyse du besoin, l'analyse des contraintes et le cahier des charges. Elle dure environ <strong>20 à 30 minutes</strong> et se déroule en 3 parties, chacune sur un objet technique différent.</p>
+    <p class="txt">Travaille seul·e, lis bien chaque question, et n'oublie pas d'envoyer tes réponses à la fin.</p>
+    <div class="field">
+      <label for="in-prenom">Prénom</label>
+      <input id="in-prenom" type="text" autocomplete="given-name" value="${esc(state.eleve.prenom)}">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label for="in-nom">Nom</label>
+        <input id="in-nom" type="text" autocomplete="family-name" value="${esc(state.eleve.nom)}">
+      </div>
+      <div class="field">
+        <label for="in-classe">Classe</label>
+        <select id="in-classe">
+          <option value="">—</option>
+          ${CLASSES.map(c=>`<option value="${c}" ${state.eleve.classe===c?"selected":""}>${c}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+    <div class="nav-row" style="justify-content:flex-end;">
+      <button class="btn btn-primary" id="btn-demarrer">Commencer ✦</button>
+    </div>`;
+}
+
+function tplIntro(item){
+  return `
+    <div class="eyebrow">${item.eyebrow}</div>
+    <h1 class="titre">${item.titre}</h1>
+    <p class="objet-badge">${item.objet}</p>
+    ${item.illus || ""}
+    <p class="txt">${item.texte}</p>
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="btn-retour">← Retour</button>
+      <button class="btn btn-primary" id="btn-suivant">C'est parti →</button>
+    </div>`;
+}
+
+function tplQcm(item, multi){
+  const rep = state.reponses[item.id];
+  const selectionne = (i) => multi ? (Array.isArray(rep) && rep.includes(i)) : rep === i;
+  return `
+    <div class="eyebrow">${eyebrowPartie(item.partie)}</div>
+    <p class="question">${item.question}</p>
+    ${multi ? `<p class="hint">Plusieurs réponses possibles.</p>` : ""}
+    <div class="options">
+      ${item.options.map((opt,i)=>`
+        <button class="opt ${selectionne(i)?"selected":""}" data-idx="${i}">
+          <span class="puce">${multi ? (selectionne(i)?"✓":"") : String.fromCharCode(65+i)}</span>
+          <span>${opt}</span>
+        </button>`).join("")}
+    </div>
+    ${navRow(repValide(item))}`;
+}
+
+function tplTexte(item){
+  const rep = state.reponses[item.id] || "";
+  return `
+    <div class="eyebrow">${eyebrowPartie(item.partie)}</div>
+    <p class="question">${item.question}</p>
+    <p class="hint">${item.hint || ""}</p>
+    <textarea class="reponse-libre" id="zone-texte" placeholder="Écris ta réponse ici…">${esc(rep)}</textarea>
+    ${navRow(repValide(item))}`;
+}
+
+function tplTri(item){
+  const rep = state.reponses[item.id] || {};
+  return `
+    <div class="eyebrow">${eyebrowPartie(item.partie)}</div>
+    <p class="question">${item.question}</p>
+    <p class="hint">${item.hint || ""}</p>
+    ${item.items.map((it,i)=>`
+      <div class="tri-item">
+        <div class="tri-txt">${it.texte}</div>
+        <div class="tri-btns">
+          <button class="tri-btn ${rep[i]==="FP"?"on-fp":""}" data-tri="${i}" data-val="FP">FP</button>
+          <button class="tri-btn ${rep[i]==="FC"?"on-fc":""}" data-tri="${i}" data-val="FC">FC</button>
+        </div>
+      </div>`).join("")}
+    ${navRow(repValide(item))}`;
+}
+
+function tplTable(item){
+  const rep = state.reponses[item.id] || {};
+  return `
+    <div class="eyebrow">${eyebrowPartie(item.partie)}</div>
+    <p class="question">${item.question}</p>
+    <table class="mini-table">
+      <tr><th>Fonction</th><th>Critère</th><th>Niveau</th></tr>
+      <tr>
+        <td>${item.fonctionLabel}</td>
+        <td class="blank">${rep[0] !== undefined ? item.blancs[0].options[rep[0]] : "……"}</td>
+        <td class="blank">${rep[1] !== undefined ? item.blancs[1].options[rep[1]] : "……"}</td>
+      </tr>
+    </table>
+    ${item.blancs.map((b,bi)=>`
+      <p class="sous-label">${b.label} :</p>
+      <div class="options">
+        ${b.options.map((opt,oi)=>`
+          <button class="opt ${rep[bi]===oi?"selected":""}" data-table="${bi}" data-idx="${oi}">
+            <span class="puce">${rep[bi]===oi?"✓":String.fromCharCode(65+oi)}</span>
+            <span>${opt}</span>
+          </button>`).join("")}
+      </div>`).join("")}
+    ${navRow(repValide(item))}`;
+}
+
+function tplFin(){
+  const {total, max, pourcentage, verifAttente} = calculerTotal();
+  let html = `
+    <div class="eyebrow" style="--accent:var(--teal)">Terminé</div>
+    <h1 class="titre">Merci, ${esc(state.eleve.prenom) || "élève"} !</h1>
+    <p class="txt">Tes réponses ont bien été enregistrées${SCRIPT_URL ? " et transmises" : ""}. Rends la tablette à ton professeur.</p>
+    <div class="badge-row">
+      <div class="badge-chip"><div class="n">${state.eleve.classe || "—"}</div><div class="l">Classe</div></div>
+      <div class="badge-chip"><div class="n">${TOTAL_TASKS}</div><div class="l">Questions</div></div>
+      <div class="badge-chip"><div class="n">✓</div><div class="l">Envoyé</div></div>
+    </div>`;
+  if(PROF_MODE){
+    html += `
+    <div class="prof-panel">
+      <p class="sous-label" style="margin-top:0;">Mode professeur — correction automatique (indicative)</p>
+      <div class="prof-row"><span><strong>Score</strong></span><span class="prof-score">${total} / ${max} (${pourcentage}%)</span></div>
+      <div class="prof-row"><span>Niveau de maîtrise</span><span class="prof-score">${niveauMaitrise(pourcentage)}</span></div>
+      ${verifAttente ? `<div class="prof-row"><span class="verif">⚠ Des réponses libres nécessitent une vérification manuelle.</span></div>` : ""}
+      ${FLOW.filter(f=>TASK_TYPES.includes(f.type)).map(f=>{
+        const c = corrigerItem(f, state.reponses[f.id]);
+        const rep = state.reponses[f.id];
+        const repTxt = Array.isArray(rep) ? JSON.stringify(rep) : (typeof rep === "object" ? JSON.stringify(rep) : String(rep===undefined?"—":rep));
+        const cls = c.verifie ? "verif" : (c.score===f.points ? "ok" : (c.score===0 ? "ko" : ""));
+        return `<div class="prof-row"><span>${f.id}</span><span class="${cls}">${c.score}/${f.points} — ${esc(repTxt.slice(0,60))}</span></div>`;
+      }).join("")}
+      <div class="nav-row" style="justify-content:flex-start; margin-top:18px;">
+        <button class="btn btn-ghost" id="btn-recommencer">↺ Nouvelle copie (réinitialiser)</button>
+      </div>
+    </div>`;
+  }
+  return html;
+}
+
+function eyebrowPartie(p){
+  const noms = {1:"Partie 1 · L'analyse du besoin", 2:"Partie 2 · L'analyse des contraintes", 3:"Partie 3 · Le cahier des charges"};
+  return noms[p];
+}
+function navRow(valide){
+  return `<div class="nav-row">
+    <button class="btn btn-ghost" id="btn-retour">← Retour</button>
+    <button class="btn btn-primary" id="btn-suivant" ${valide ? "" : "disabled"}>Suivant →</button>
+  </div>`;
+}
+function repValide(item){
+  const rep = state.reponses[item.id];
+  switch(item.type){
+    case "qcm": return rep !== undefined;
+    case "qcm-multi": return Array.isArray(rep) && rep.length > 0;
+    case "texte": return typeof rep === "string" && rep.trim().length >= 8;
+    case "tri": return rep && Object.keys(rep).length === item.items.length;
+    case "table": return rep && rep[0] !== undefined && rep[1] !== undefined;
+    default: return true;
+  }
+}
+function esc(s){ return (s===undefined||s===null?"":String(s)).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ============================================================ EVENEMENTS */
+function attacherEvenements(item){
+  const card = document.getElementById("card");
+
+  const btnSuivant = document.getElementById("btn-suivant");
+  if(btnSuivant) btnSuivant.addEventListener("click", ()=>{
+    if(item.type === "fin") return;
+    const dernier = state.ecran >= FLOW.length - 2;
+    if(FLOW[state.ecran+1] && FLOW[state.ecran+1].id === "fin"){
+      envoyerReponses();
+      return;
+    }
+    state.ecran++;
+    sauverBrouillon();
+    render();
+  });
+
+  const btnRetour = document.getElementById("btn-retour");
+  if(btnRetour) btnRetour.addEventListener("click", ()=>{
+    if(state.ecran > 0){ state.ecran--; sauverBrouillon(); render(); }
+  });
+
+  const btnDemarrer = document.getElementById("btn-demarrer");
+  if(btnDemarrer) btnDemarrer.addEventListener("click", ()=>{
+    state.eleve.prenom = document.getElementById("in-prenom").value.trim();
+    state.eleve.nom = document.getElementById("in-nom").value.trim();
+    state.eleve.classe = document.getElementById("in-classe").value;
+    if(!state.eleve.prenom || !state.eleve.nom || !state.eleve.classe){
+      alert("Merci de renseigner ton prénom, ton nom et ta classe avant de commencer.");
+      return;
+    }
+    state.ecran = 1;
+    sauverBrouillon();
+    render();
+  });
+
+  const btnRecommencer = document.getElementById("btn-recommencer");
+  if(btnRecommencer) btnRecommencer.addEventListener("click", reinitialiser);
+
+  if(item.type === "qcm"){
+    card.querySelectorAll(".opt[data-idx]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        state.reponses[item.id] = parseInt(b.dataset.idx,10);
+        sauverBrouillon(); render();
+      });
+    });
+  }
+  if(item.type === "qcm-multi"){
+    card.querySelectorAll(".opt[data-idx]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const i = parseInt(b.dataset.idx,10);
+        let rep = Array.isArray(state.reponses[item.id]) ? [...state.reponses[item.id]] : [];
+        if(rep.includes(i)) rep = rep.filter(x=>x!==i); else rep.push(i);
+        state.reponses[item.id] = rep;
+        sauverBrouillon(); render();
+      });
+    });
+  }
+  if(item.type === "texte"){
+    const zone = document.getElementById("zone-texte");
+    if(zone){
+      zone.addEventListener("input", ()=>{
+        state.reponses[item.id] = zone.value;
+        sauverBrouillon();
+        const btn = document.getElementById("btn-suivant");
+        if(btn) btn.disabled = !repValide(item);
+      });
+    }
+  }
+  if(item.type === "tri"){
+    card.querySelectorAll(".tri-btn[data-tri]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const i = parseInt(b.dataset.tri,10);
+        const val = b.dataset.val;
+        let rep = state.reponses[item.id] ? {...state.reponses[item.id]} : {};
+        rep[i] = val;
+        state.reponses[item.id] = rep;
+        sauverBrouillon(); render();
+      });
+    });
+  }
+  if(item.type === "table"){
+    card.querySelectorAll(".opt[data-table]").forEach(b=>{
+      b.addEventListener("click", ()=>{
+        const bi = parseInt(b.dataset.table,10);
+        const oi = parseInt(b.dataset.idx,10);
+        let rep = state.reponses[item.id] ? {...state.reponses[item.id]} : {};
+        rep[bi] = oi;
+        state.reponses[item.id] = rep;
+        sauverBrouillon(); render();
+      });
+    });
+  }
+}
+
+/* ============================================================ DEMARRAGE */
+render();
+viderFile();
+</script>
+</body>
+</html>
