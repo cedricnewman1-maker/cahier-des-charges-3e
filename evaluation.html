@@ -279,11 +279,14 @@ const FLOW = [
     options:["Le budget de la municipalité","Le déplacement de l'usager","La batterie du smartphone de l'usager"],
     correct:1},
 
-  {id:"p1-q3", type:"texte", partie:1, accent:"var(--rust)", points:3,
-    question:"En une phrase, formule la fonction globale de la trottinette électrique en libre-service.",
-    hint:"Aide : utilise la structure « Permettre à … de … ». Cette réponse libre sera vérifiée par ton professeur.",
-    keywords:[["permettre","permet"],["usager","utilisateur","personne","client","habitant"],["déplacer","déplacement","circuler","se déplacer","se rendre"]]},
-
+  {id:"p1-q3", type:"qcm", partie:1, accent:"var(--rust)", points:3,
+       question:"Laquelle de ces phrases formule correctement la fonction globale de la trottinette électrique en libre-service ?",
+       options:[
+               "Permettre à l'usager de se déplacer en ville sans recourir à une voiture.",
+               "La trottinette est légère, pliable et équipée d'une batterie rechargeable.",
+               "L'usager doit avoir plus de 14 ans pour utiliser le service."],
+       correct:0},
+  
   {id:"p1-q4", type:"qcm-multi", partie:1, accent:"var(--rust)", points:2,
     question:"Coche les deux phrases qui formulent correctement une fonction globale (sujet implicite + verbe à l'infinitif + complément).",
     options:[
@@ -315,11 +318,14 @@ const FLOW = [
     options:["Le diagramme pieuvre","Le cahier des charges","La bête à cornes"],
     correct:0},
 
-  {id:"p2-q3", type:"texte", partie:2, accent:"var(--teal)", points:3,
-    question:"Rédige une fonction contrainte (FC) du lave-linge connecté concernant la sécurité électrique.",
-    hint:"Cette réponse libre sera vérifiée par ton professeur.",
-    keywords:[["résister","respecter","supporter"],["norme","sécurité","réglementation"],["électrique","électricité"]]},
-
+  {id:"p2-q3", type:"qcm", partie:2, accent:"var(--teal)", points:3,
+       question:"Laquelle de ces phrases formule correctement une fonction contrainte (FC) du lave-linge connecté concernant la sécurité électrique ?",
+       options:[
+               "Résister aux surtensions du réseau électrique domestique.",
+               "Nettoyer le linge sale en moins de deux heures.",
+               "Se connecter automatiquement au Wi-Fi du domicile."],
+       correct:0},
+  
   {id:"p3-intro", type:"intro", partie:3, accent:"var(--plum)", icon:iconCdc("#7B3F6B"),
     eyebrow:"Partie 3 · Le cahier des charges", titre:"Comment l'exiger précisément ?",
     objet:"Objet étudié : le store banne automatique",
@@ -343,11 +349,14 @@ const FLOW = [
     options:["F0","F1","F3"],
     correct:0},
 
-  {id:"p3-q4", type:"texte", partie:3, accent:"var(--plum)", points:3,
-    question:"Rédige une ligne de cahier des charges (fonction, critère et niveau) pour la contrainte suivante : le store doit se rétracter automatiquement en cas de pluie.",
-    hint:"Cette réponse libre sera vérifiée par ton professeur.",
-    keywords:[["capteur","détecteur"],["pluie"],["automatique","automatiquement","seul","sans intervention"]]},
-
+  {id:"p3-q4", type:"qcm", partie:3, accent:"var(--plum)", points:3,
+       question:"Quelle ligne de cahier des charges correspond correctement à l'exigence « le store doit se rétracter automatiquement en cas de pluie » ?",
+       options:[
+               "Critère : présence d'un capteur de pluie déclenchant la fermeture — Niveau : rétraction automatique dès détection de pluie, sans intervention de l'utilisateur.",
+               "Critère : couleur de la toile — Niveau : résistante aux taches de pluie.",
+               "Critère : vitesse de rétraction — Niveau : moins de 30 secondes, quelle que soit la météo."],
+       correct:0},
+  
   {id:"fin", type:"fin"}
 ];
 
