@@ -191,6 +191,13 @@
   .prof-score{font-weight:800; font-family:'Fredoka',sans-serif;}
   .ok{color:var(--good);}
   .ko{color:var(--bad);}
+  .relu-item{border:2px solid var(--line); border-radius:14px; padding:12px 14px; margin:10px 0; display:flex; gap:12px; align-items:flex-start; justify-content:space-between;}
+  .relu-item .relu-q{font-size:13px; color:var(--ink-soft); margin:0 0 6px;}
+  .relu-item .relu-r{font-size:15px; font-weight:700; margin:0; line-height:1.4;}
+  .relu-item .relu-vide{color:var(--bad);}
+  .relu-partie{font-weight:800; font-size:13px; letter-spacing:.06em; text-transform:uppercase; margin:22px 0 4px;}
+  .btn-modif{flex:none; background:transparent; border:2px solid var(--line); border-radius:10px; padding:8px 12px; font:inherit; font-size:14px; font-weight:700; color:var(--ink); cursor:pointer;}
+  .envoye-ok{background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good); font-weight:800; font-size:18px; border-radius:14px; padding:14px 16px; margin:16px 0;}
   .verif{color:#8A5E16;}
   @media (max-width:480px){
     .card{padding:26px 20px 24px;}
@@ -359,6 +366,7 @@ const FLOW = [
                "Critère : vitesse de rétraction — Niveau : moins de 30 secondes, quelle que soit la météo."],
        correct:0},
   
+  {id:"relecture", type:"relecture", accent:"var(--mustard)"},
   {id:"fin", type:"fin"}
 ];
 
@@ -388,6 +396,7 @@ function reinitialiser(){
   try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
   state = {ecran:0, eleve:{classe:"", nom:"", prenom:""}, reponses:{}};
   render();
+  window.scrollTo(0,0);
 }
 
 /* ============================================================ CORRECTION */
@@ -506,6 +515,7 @@ function render(){
     case "texte": card.innerHTML = tplTexte(item); break;
     case "tri": card.innerHTML = tplTri(item); break;
     case "table": card.innerHTML = tplTable(item); break;
+    case "relecture": card.innerHTML = tplRelecture(); break;
     case "fin": card.innerHTML = tplFin(); break;
   }
   attacherEvenements(item);
@@ -513,7 +523,7 @@ function render(){
 
 function renderTopbar(item){
   const top = document.getElementById("topbar");
-  if(item.type === "accueil" || item.type === "fin"){ top.innerHTML = ""; return; }
+  if(item.type === "accueil" || item.type === "fin" || item.type === "relecture"){ top.innerHTML = ""; return; }
   const taches = FLOW.filter(f=>TASK_TYPES.includes(f.type));
   const parProjet = {1:[], 2:[], 3:[]};
   taches.forEach(f=>parProjet[f.partie].push(f));
@@ -645,12 +655,48 @@ function tplTable(item){
     ${navRow(repValide(item))}`;
 }
 
+function texteReponse(item, rep){
+  if(rep === undefined || rep === null) return null;
+  switch(item.type){
+    case "qcm": return String.fromCharCode(65+rep) + ". " + item.options[rep];
+    case "qcm-multi": return Array.isArray(rep) && rep.length ? [...rep].sort().map(i=>String.fromCharCode(65+i)+". "+item.options[i]).join("<br>") : null;
+    case "tri": return item.items.map((it,i)=>it.texte + " → <strong>" + (rep[i] || "?") + "</strong>").join("<br>");
+    case "table": return item.blancs.map((b,i)=>b.label + " : " + (rep[i]!==undefined ? b.options[rep[i]] : "?")).join("<br>");
+    case "texte": return esc(rep);
+    default: return null;
+  }
+}
+function tplRelecture(){
+  let partie = 0;
+  const lignes = FLOW.map((f,idx)=>{
+    if(!TASK_TYPES.includes(f.type)) return "";
+    let titre = "";
+    if(f.partie !== partie){ partie = f.partie; titre = `<p class="relu-partie" style="color:${f.accent}">${eyebrowPartie(f.partie)}</p>`; }
+    const t = texteReponse(f, state.reponses[f.id]);
+    return titre + `<div class="relu-item">
+      <div><p class="relu-q">Question ${TASK_INDEXES[f.id]} · ${f.question}</p>
+      <p class="relu-r ${t ? "" : "relu-vide"}">${t || "⚠ Pas de réponse"}</p></div>
+      <button class="btn-modif" data-aller="${idx}">✎ Modifier</button>
+    </div>`;
+  }).join("");
+  return `
+    <div class="eyebrow">Relecture</div>
+    <h1 class="titre">Vérifie tes réponses</h1>
+    <p class="txt">Relis chaque réponse. Pour en changer une, touche « Modifier ». Quand tout est bon, appuie sur « Envoyer ma copie » : tu ne pourras plus rien changer ensuite.</p>
+    ${lignes}
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="btn-retour">← Retour</button>
+      <button class="btn btn-primary" id="btn-envoyer">Envoyer ma copie ✓</button>
+    </div>`;
+}
+
 function tplFin(){
   const {total, max, pourcentage, verifAttente} = calculerTotal();
   let html = `
     <div class="eyebrow" style="--accent:var(--teal)">Terminé</div>
     <h1 class="titre">Merci, ${esc(state.eleve.prenom) || "élève"} !</h1>
-    <p class="txt">Tes réponses ont bien été enregistrées${SCRIPT_URL ? " et transmises" : ""}. Rends la tablette à ton professeur.</p>
+    <p class="envoye-ok">✓ Copie bien envoyée au professeur</p>
+    <p class="txt">Pose la tablette, écran vers le haut, et attends les consignes du professeur.</p>
     <div class="badge-row">
       <div class="badge-chip"><div class="n">${state.eleve.classe || "—"}</div><div class="l">Classe</div></div>
       <div class="badge-chip"><div class="n">${TOTAL_TASKS}</div><div class="l">Questions</div></div>
@@ -670,11 +716,12 @@ function tplFin(){
         const cls = c.verifie ? "verif" : (c.score===f.points ? "ok" : (c.score===0 ? "ko" : ""));
         return `<div class="prof-row"><span>${f.id}</span><span class="${cls}">${c.score}/${f.points} — ${esc(repTxt.slice(0,60))}</span></div>`;
       }).join("")}
-      <div class="nav-row" style="justify-content:flex-start; margin-top:18px;">
-        <button class="btn btn-ghost" id="btn-recommencer">↺ Nouvelle copie (réinitialiser)</button>
-      </div>
     </div>`;
   }
+  html += `
+    <div class="nav-row" style="justify-content:flex-start; margin-top:26px;">
+      <button class="btn btn-ghost" id="btn-recommencer">↺ Nouvelle copie (élève suivant)</button>
+    </div>`;
   return html;
 }
 
@@ -685,7 +732,7 @@ function eyebrowPartie(p){
 function navRow(valide){
   return `<div class="nav-row">
     <button class="btn btn-ghost" id="btn-retour">← Retour</button>
-    <button class="btn btn-primary" id="btn-suivant" ${valide ? "" : "disabled"}>Suivant →</button>
+    <button class="btn btn-primary" id="btn-suivant" ${valide ? "" : "disabled"}>${state.depuisRelecture ? "Retour à la relecture →" : "Suivant →"}</button>
   </div>`;
 }
 function repValide(item){
@@ -713,14 +760,36 @@ function attacherEvenements(item){
       envoyerReponses();
       return;
     }
-    state.ecran++;
+    if(state.depuisRelecture){
+      state.depuisRelecture = false;
+      state.ecran = FLOW.findIndex(f=>f.id === "relecture");
+    } else {
+      state.ecran++;
+    }
     sauverBrouillon();
     render();
   });
 
+  const btnEnvoyer = document.getElementById("btn-envoyer");
+  if(btnEnvoyer) btnEnvoyer.addEventListener("click", ()=>{
+    if(state.termine) return;
+    btnEnvoyer.disabled = true;
+    envoyerReponses();
+  });
+
+  card.querySelectorAll("[data-aller]").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      state.ecran = parseInt(b.dataset.aller,10);
+      state.depuisRelecture = true;
+      sauverBrouillon();
+      render();
+      window.scrollTo(0,0);
+    });
+  });
+
   const btnRetour = document.getElementById("btn-retour");
   if(btnRetour) btnRetour.addEventListener("click", ()=>{
-    if(state.ecran > 0){ state.ecran--; sauverBrouillon(); render(); }
+    if(state.ecran > 0){ state.depuisRelecture = false; state.ecran--; sauverBrouillon(); render(); }
   });
 
   const btnDemarrer = document.getElementById("btn-demarrer");
@@ -738,7 +807,9 @@ function attacherEvenements(item){
   });
 
   const btnRecommencer = document.getElementById("btn-recommencer");
-  if(btnRecommencer) btnRecommencer.addEventListener("click", reinitialiser);
+  if(btnRecommencer) btnRecommencer.addEventListener("click", ()=>{
+    if(confirm("Commencer une nouvelle copie pour un autre élève ?")) reinitialiser();
+  });
 
   if(item.type === "qcm"){
     card.querySelectorAll(".opt[data-idx]").forEach(b=>{
